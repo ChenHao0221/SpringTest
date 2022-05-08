@@ -1,0 +1,67 @@
+[1]
+ioc
+    1、源码包开始的路径，称为类路径的开始（这里的类路径的开始不是src，因为java才是真正的源码包（蓝色））
+        所有源码包里面的东西都会被合并放在类路径里面
+        java：/bin/（这个项目里面是target下的classes）
+        web：/WEB-INF/classes/
+    2、先导包再创建配置文件
+
+    几个细节：
+        1、ClassPathXmlApplicationContext("ioc.xml")：表示ioc容器的配置文件在类路径下
+           FileSystemXmlApplicationContext()：表示ioc容器的配置文件在磁盘路径下
+
+        2、组件的创建工作是容器完成的，对象是什么时候创建好的呢？
+           容器中对象的创建在容器创建完成的时候就创建好了
+
+        3、同一个组件在ioc容器中是单实例的（也就是只有一份），容器启动完成之前都已经创建好了
+
+        4、容器中没有这个组件，获取时报异常：NoSuchBeanDefinitionException
+
+        5、ioc容器在创建这个对象的时候，（property）会利用setter方法为javaBean对象的属性进行赋值
+
+        6、javaBean的属性名不是由声明的变量名所决定的，而是由setter/getter方法决定（也就是set/get去掉之后后面的那串，将首字母小写之后就是属性名）
+           所有的getter/setter都用自动生成！！！
+
+        7、如果ioc容器中这个类型的bean由多个，根据类型查找会失败（ioc.getBean(Person.class)）
+           NoUniqueBeanDefinitionException
+
+        8、内部bean是不能被获取到的，只能内部使用，因此写不写id都是一样的
+
+[2]
+Spring数据库模块
+    spring-jdbc
+    spring-orm
+    spring-tx
+
+查询数据库记录封装成java对象返回时：
+    javaBean需要和数据库中字段一致，否则无法完成封装，因此查询语句中的字段需要起别名(哪个字段封装给谁，就是看这个字段跟哪个javaBean字段一模一样)
+    例如：Select emp_id empId, emp_name enpName from employee //emp_id是数据库的字段名，别名empId和javaBean中的一致
+
+具名参数：具有名字的参数，参数不是占位符了，而是一个变量名
+          语法格式是 ---> :参数名
+          Insert into employee(emp_id, sales) value(:empId,:sales) //具名参数的变量名在JavaBean中都要有，一一对应
+占位符参数：?  ?的顺序千万不能乱，传参的时候一定注意  Insert into employee(emp_id, sales) value(?,?)
+
+[3]
+查看某个接口/父类的继承/实现关系：选中接口/父类，ctrl+h (就是idea右侧边边的Hierarchy)
+
+[4]
+事务
+    事务就是一组由于逻辑上紧密关联而合并成一个整体的多个数据库操作，这些操作要么都执行，要么都不执行
+
+Spring事务控制步骤：
+    <!--  事务控制  -->
+    <!--  1、配置事务管理器(切面)，让其进行事务控制(一定要导入面向切面编程的几个包)  -->
+    <bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--    控制住数据源    -->
+        <property name="dataSource" ref="pooledDataSource"></property>
+    </bean>
+    <!--  2、开启基于注解的事务控制模式，依赖tx名称空间  -->
+    <tx:annotation-driven transaction-manager="tm"/>
+    <!--  3、给事务方法加注解@Transaction  -->
+
+有事务的业务逻辑，容器中保存的时这个业务逻辑的代理对象
+
+[源码]
+源码那几集学着怎么看源码：
+    怎么用debug模式去看代码，打断点

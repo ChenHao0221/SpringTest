@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.2.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       ">
+
+    <context:component-scan base-package="com.chen"></context:component-scan>
+    <!--
+        5个通知注解：
+        @Before：在目标方法运行之前  前置通知
+        @After：在目标方法结束之后   后置通知
+        @AfterReturning：在目标方法正常返回之后      返回通知
+        @AfterThrowing：在目标方法抛出异常之后运行   异常通知
+        @Around：环绕通知
+
+        try{
+            @Before
+            method.invoke(object, args); //目标 方法执行
+            @AfterReturning
+        }catch(e){
+            @AfterThrowing
+        }finally{
+            @After
+        }
+    -->
+    <!--  开启基于注解的AOP功能：aop名称空间  -->
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+
+    <!--  AOP细节一：IOC容器中保存的是组件的代理对象
+                     AOP底层就是动态代理，容器中保存的组件是他的代理对象(不是本类对象，代理对象和本类对象唯一能产生关联的就是都有同一个接口)
+                     因此如果想要用类型获取bean，一定要用他的接口类型，不要用本类
+
+                     cglib为没有接口的组件也可以创建代理对象
+                     没有接口获取bean的时候就用本类类型
+          AOP细节二：切入点表达式写法(通配符)
+                     固定格式：execution(访问权限符 返回值类型 方法全签名(参数表))
+                     通配符：
+                            *    (1)匹配一个或者多个字符：execution(public int com.chen.impl.My*r.*(int, int))
+                                 (2)匹配任意一个参数：execution(public int com.chen.impl.MyCalculator.*(int, *))   //第一个参数int类型，第二个参数任意类型(只匹配两个参数)
+                                 (3)只能匹配一层路径：execution(public int com.chen.*.MyCalculator.*(int, int))
+                                 (4)权限位置*不能表示任意权限，public可写可不写
+
+                            ..   (1)匹配任意多个参数，任意类型参数：execution(public int com.chen.impl.MyCalculator.*(..))
+                                 (2)匹配任意多层路径：execution(public int com.chen..MyCalculator.*(int, int))
+                            记住两种
+                                最精确的：execution(public int com.chen.impl.MyCalculator.*(int, int))
+                                最模糊的：execution(* *.*(..))   //任意包下的任意类的任意方法(不推荐写)
+          AOP细节三：通知方法的执行顺序
+                     正常执行：@Before前置通知 ===> @After后置通知 ===> @AfterReturning(正常返回)
+                     异常执行：@Before前置通知 ===> @After后置通知 ===> @AfterThrowing(方法异常)
+          AOP细节四：JoinPoint获取目标方法的信息
+                     1、只需要为通知方法的参数列表上写一个参数:JoinPoint joinPoint封装了当前目标方法的详细信息
+                        获取到目标方法运行时使用的参数：joinPoint.getArgs()
+                        获取到方法签名：joinPoint.getSignature()
+                        获取方法名：joinPoint.getSignature().getName()
+          AOP细节五：throwing、returning来指定哪个参数用来接收异常、返回值
+                     @AfterReturning(value = "execution(public int com.chen.impl.MyCalculator.*(int, int))", returning = "result")
+                     returning = "result"告诉Spring使用result这个变量来接收返回值
+
+                     @AfterThrowing(value = "execution(public int com.chen.impl.MyCalculator.*(int, int))", throwing = "exception")
+
+          AOP细节六：Spring对通知方法的约束：参数列表一定正确
+                     通知方法是Spring利用反射调用的，每次方法调用得确定这个方法的参数表的值
+                     参数表上的每一个参数，Spring都得知道是什么
+                     不知道的参数一定要告诉Spring这是什么
+          AOP细节七：抽取可重用的切入点表达式
+                     1、随便声明一个没有实现的返回void的空方法
+                     2、给方法上标注@Pointcut注解
+          AOP细节八：环绕通知@Around
+                     Spring中强大的通知，动态代理
+                     四个通知(前置、后置、返回、异常)四合一就是环绕通知
+                     环绕通知中有一个参数：ProceedingJoinPoint pjp
+          AOP细节九：环绕通知的执行顺序 & 抛出异常让其他通知感受到
+                     环绕通知优先于普通通知执行，执行顺序：
+                        (环绕前置 === 普通前置) === 目标方法执行 === 环绕正常返回/异常 === 环绕后置 === 普通后置 === 普通返回/异常
+                     注意：为了让外界能知道异常，环绕捕获的异常一定要抛出去
+          AOP细节十：多切面运行顺序
+                     使用注解@Order(1/2/3/...)改变切面的顺序，数值越小优先级越高 (在切面类上标注解)
+                     环绕只是影响当前切面
+    -->
+    <!-- 基于注解的AOP步骤：
+         1、将目标类和切面类都加入到ioc容器中 @Component
+         2、告诉Spring哪个是切面类  @Aspect
+         3、在切面类中使用五个通知注解来配置切面中的这些通知方法都何时何地执行
+         4、开启基于注解的AOP功能  <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+    -->
+    <!-- 基于xml配置的AOP(详见视频83)   -->
+    <!-- 注解的优点：快速方便
+         配置的优点：功能完善；重要的用配置，不重要的用注解
+    -->
+</beans>

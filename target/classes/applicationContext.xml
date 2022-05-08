@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+    <!--  引用外部属性文件(重要) ===> Spring管理连接池  -->
+    <!--  依赖context名称空间  -->
+    <!--  数据库连接池作为单实例是最好的。一个项目一个连接池，连接池里面管理很多连接，连接是直接从连接池中拿   -->
+    <!--  可以让Spring帮我们创建连接池对象(管理连接池)  -->
+    <!--  加载外部配置文件  classpath:固定写法，表示引用类路径下的一个资源  -->
+    <context:property-placeholder location="classpath:dbconfig.properties"/>
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!--   ${key}动态取出配置文件中某个key对应的值     -->
+        <!--   username是Spring的key中的一个关键字，为了防止配置文件中的key和Spring自己的关键字冲突     -->
+        <property name="user" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+        <property name="driverClass" value="${jdbc.driverClass}"></property>
+    </bean>
+
+<!--  基于XML的自动装配(自定义类型自动赋值) -->
+    <bean id="car" class="com.chen.bean.Car">
+        <property name="carName" value="宝马"></property>
+        <property name="color" value="蓝色"></property>
+    </bean>
+    <!--  为Person里面的自定义类型赋值
+          property是手动赋值
+    -->
+    <!--  autowire自动装配，就是自动为属性赋值，仅限于自定义类型的属性有效
+          autowire="default / no"表示不自动装配
+          //按照某种规则自动装配
+          autowire="byName"表示按照名字。private Car car; 以属性名(这里是car，bean的id如果不是car那就找不到)作为id去哦容器中找到这个组件，给他赋值；如果找不到就装配null
+                                        car = ioc.getBean("car");
+          autowire="byType"表示按照类型。private Car car;以属性的类型作为查找依据去容器中找组件。如果容器中有多个这样的组件，则会报错
+                                        没找到则装配null
+                                        car = ioc.getBean(Car.class);
+          autowire="constructor"表示按照构造器进行赋值。
+                                public Person(Car car)
+                                1、先按照有参构造器参数的类型进行装配，没有就直接为装配null
+                                2、如果按照类型找到了多个，则参数名(car)作为id继续匹配，没有找到就装配null
+                                3、不会报错
+    -->
+    <bean id="person" class="com.chen.bean.Person" autowire="constructor"></bean>
+    <!--  Person中有List<Book> 可以把容器中所有的book封装list，然后赋值给这个属性  -->
+    <bean id="book01" class="com.chen.bean.Book">
+        <property name="bookName" value="西游记"></property>
+    </bean>
+    <bean id="book02" class="com.chen.bean.Book">
+        <property name="bookName" value="水浒传"></property>
+    </bean>
+    <bean id="book03" class="com.chen.bean.Book">
+        <property name="bookName" value="三国"></property>
+    </bean>
+
+    <!--  SpEL测试：Spring表达式语言
+              在SpEL中使用字面量
+              引用其他bean
+              引用其他bean的某个属性
+              调用非静态方法
+              调用静态方法
+              使用运算符(都支持)
+    -->
+    <bean id="person02" class="com.chen.bean.Person">
+        <!--    字面量：#{}    -->
+        <property name="age" value="#{12*5}"></property>
+        <!--    引用其他bean的某个属性    -->
+        <property name="name" value="#{book01.bookName}"></property>
+        <!--    引用其他bean    -->
+        <property name="car" value="#{car}"></property>
+        <!--    调用静态方法：#{T(全类名).静态方法名(参数)}    -->
+        <property name="email" value="#{T(java.util.UUID).randomUUID().toString()}"></property>
+        <!--    调用非静态方法    -->
+        <property name="gender" value="#{book01.getBookName()}"></property>
+    </bean>
+    <!--  ${}取出配置文件中的值
+          #{}Spring的表达式语言
+    -->
+</beans>

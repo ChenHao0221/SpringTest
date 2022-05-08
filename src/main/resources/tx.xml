@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.2.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       ">
+    <context:component-scan base-package="com.chen"></context:component-scan>
+
+    <!--  引入外部配置文件  -->
+    <context:property-placeholder location="classpath:dbconfig.properties"/>
+    <!--  配置数据源  -->
+    <bean id="pooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="user" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+        <property name="driverClass" value="${jdbc.driverClass}"></property>
+    </bean>
+    <!--  配置JdbcTemplate  -->
+    <bean class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="pooledDataSource"></property>
+<!--    第二种写法：<property name="dataSource" value="#{pooledDataSource}"></property>-->
+    </bean>
+
+    <!--  事务控制  -->
+    <!--  1、配置事务管理器(切面)，让其进行事务控制(一定要导入面向切面编程的几个包)  -->
+    <bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--    控制住数据源    -->
+        <property name="dataSource" ref="pooledDataSource"></property>
+    </bean>
+    <!--  2、开启基于注解的事务控制模式，依赖tx名称空间  -->
+    <tx:annotation-driven transaction-manager="tm"/>
+    <!--  3、给事务方法加注解@Transaction  -->
+
+    <!--  事务细节
+          isolation(类型Isolation)：事务的隔离级别
+          propagation(类型Propagation)：事务的传播行为
+
+          noRollBackFor(类型Class[])：哪些异常事务可以不回滚，例如让数学异常不回滚：noRollBackFor={ArithmeticException.class}
+          noRollBackForClassName(类型String[]) (String全类名) 一般都用Class[]类型的，不用这个
+          RollBackFor(类型Class[])：哪些异常事务需要回滚
+          RollBackForClassName(类型String[])
+
+            运行时异常(非检查异常)默认都回滚
+            编译时异常(检查异常)默认不回滚
+
+          readOnly(类型Boolean)：设置事务为只读事务
+          timeout(类型int，以秒为单位)：超时，超出指定执行时长后自动终止并回滚
+
+          【propagation(类型Propagation)：事务的传播行为】
+                传播行为(事务的传播+事物的行为)
+                如果有多个事务嵌套运行，子事务是否要和大事务共用一个事务(使用同一条连接)(子事务发生异常，大事务要不要跟着一起回滚)
+                任何处崩，已经执行的REQUEST_NEW都会成功，还没执行完的会崩(异常该怎么往上映射还是怎么往上映射的) 【112集】
+                REQUIRED事务属性来源于大事务(事务的属性都是继承于大事务)
+                本类方法的嵌套调用就只是一个事务(就不是通过代理对象去调用了，没有办法实现在方法运行前后事务控制) 【114集】
+    -->
+
+    <!--  基于xml配置的事务控制【115集】
+          重要的用配置，不重要的用注解！
+    -->
+<!--    <aop:config>-->
+<!--        <aop:pointcut id="txPoint" expression="execution(* com.chen.service.*.*(..))"/>-->
+<!--        <aop:advisor advice-ref="myTx" pointcut-ref="txPoint"/>-->
+<!--    </aop:config>-->
+<!--    -->
+<!--    <tx:advice id="myTx" transaction-manager="tm">-->
+<!--        <tx:attributes>-->
+<!--            <tx:method name="*"/>-->
+<!--            <tx:method name="get*" read-only="true"/>-->
+<!--        </tx:attributes>-->
+<!--    </tx:advice>-->
+</beans>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/util
+            http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+    <!--  正确为各种属性赋值  -->
+    <!--  测试使用null值、引用类型赋值（引用其他bean、引用内部bean）
+          集合类型赋值（List、Map、Properties）、util名称空间创建集合类型的bean
+          级联属性赋值
+    -->
+    <!--  基本类型直接用<property name="age" value="18"></property>赋值，自动进行类型转换  -->
+    <bean id="car01" class="com.chen.bean.Car">
+        <property name="carName" value="宝马"></property>
+        <property name="color" value="黑色"></property>
+        <property name="price" value="300000"></property>
+    </bean>
+
+    <bean id="person01" class="com.chen.bean.Person">
+        <!--  测试使用null值  -->
+        <!--   name属性有默认值“小明”，现在要将其改为null     -->
+        <property name="name">
+            <!--      进行复杂的赋值      -->
+            <null/>
+        </property>
+
+        <!--   引用类型赋值 - 引用外部其他bean     -->
+        <!--   ref表示引用外面的一个值  属性car = ioc2.getBean("car01")   -->
+        <!--   <property name="car" ref="car01"></property>-->
+
+        <!--   引用类型赋值 - 引用内部bean     -->
+        <property name="car">
+            <!--    对象我们可以使用bean标签创建   car = new Car();     -->
+            <bean class="com.chen.bean.Car">
+                <property name="carName" value="宝马"></property>
+                <property name="color" value="红色"></property>
+                <property name="price" value="40000"></property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="book01" class="com.chen.bean.Book">
+        <property name="bookName" value="三国演义"></property>
+    </bean>
+
+    <bean id="person02" class="com.chen.bean.Person">
+        <!--  为List类型赋值  -->
+        <property name="books">
+            <!--    list相当于boos = new ArrayList<Book>();   -->
+            <list>
+                <!--    list标签体中添加每一个元素     -->
+                <!--    方式1            -->
+                <bean class="com.chen.bean.Book" p:bookName="西游记"></bean>
+                <!--    方式2：ref引用外部元素    -->
+                <ref bean="book01"/>
+            </list>
+        </property>
+
+        <!--   为Map类型赋值     -->
+        <!--   Map<String, Object>     -->
+        <property name="maps">
+            <!--    maps = new LinkedHashMap<>();   -->
+            <map>
+                <!--   一个entry就代表一个键值对    -->
+                <entry key="key01" value="小花"></entry>
+                <entry key="key02" value-ref="book01"></entry>
+                <entry key="key03">
+                    <bean class="com.chen.bean.Car">
+                        <property name="carName" value="奔驰"></property>
+                    </bean>
+                </entry>
+<!--                <entry key="key05">-->
+<!--                    <map></map>-->
+<!--                </entry>-->
+            </map>
+        </property>
+
+        <!--   为Properties类型赋值     -->
+        <property name="properties">
+            <!--   properties = new Properties();      -->
+            <!--   Properties中所有的键值对都是String         -->
+            <props>
+                <prop key="username">root</prop>
+                <prop key="password">1234qwer</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- util名称空间创建集合类型的bean (util名称空间创建一个可以外部引用的集合) -->
+    <bean id="person03" class="com.chen.bean.Person">
+        <property name="maps" ref="myMap"></property>
+    </bean>
+    <!--  相当于new LinkedHashMap<>();  -->
+    <util:map id="myMap">
+        <!--    添加元素    -->
+        <entry key="key01" value="小刘"></entry>
+        <entry key="key02" value-ref="book01"></entry>
+        <entry key="key03">
+            <bean class="com.chen.bean.Car">
+                <property name="carName" value="甲壳虫"></property>
+            </bean>
+        </entry>
+    </util:map>
+
+    <!--  级联属性赋值  -->
+    <!--  级联属性就是属性的属性。例如Person中有一个Car属性，Car又有一个carName属性，那么carName就是级联属性  -->
+    <bean id="person04" class="com.chen.bean.Person">
+        <!--   为car赋值的时候，改变car的价格     -->
+        <property name="car" ref="car01"></property>
+        <!--   原来的bean的值可能会被修改，因为用的是ref，其实都是同一个car     -->
+        <property name="car.price" value="100000"></property>
+    </bean>
+
+    <!--  通过继承实现bean配置信息的重用  -->
+    <!--  person06和person只有名字不一样，其他都一样  -->
+    <bean id="person05" class="com.chen.bean.Person">
+        <property name="name" value="小辰"></property>
+        <property name="age" value="23"></property>
+        <property name="gender" value="女"></property>
+        <property name="email" value="lrc@qq.com"></property>
+    </bean>
+    <!--  parent指定当前bean的配置信息继承于哪个  -->
+    <bean id="person06" class="com.chen.bean.Person" parent="person05">
+        <property name="name" value="小昊"></property>
+    </bean>
+
+    <!--  通过abstract属性创建一个模板bean  -->
+    <!--  abstract="true"表示这个bean的配置是抽象的，不能获取实例，只能被用来继承  -->
+    <bean id="model" class="com.chen.bean.Person" abstract="true">
+        <property name="name" value="小辰"></property>
+    </bean>
+
+</beans>

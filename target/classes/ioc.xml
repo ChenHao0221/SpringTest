@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--  一个Bean标签可以注册一个组件  -->
+    <bean id="helloWorld" class="com.chen.bean.HelloWorld"></bean>
+
+    <!-- 调用无参构造器创建对象，(property)并使用setter方法为变量赋值   -->
+    <bean id="person01" class="com.chen.bean.Person">
+        <!--    使用property标签为Person对象属性赋值    -->
+        <property name="name" value="张三"></property>
+        <property name="age" value="18"></property>
+        <property name="gender" value="男"></property>
+        <property name="email" value="1234@qq.com"></property>
+    </bean>
+
+    <!--   调用有参构造器进行创建对象并赋值 (掌握)     -->
+    <bean id="person03" class="com.chen.bean.Person">
+        <!--   写4个constructor-arg表示调用有四个参数的构造器     -->
+        <constructor-arg name="name" value="李四"></constructor-arg>
+        <constructor-arg name="age" value="20"></constructor-arg>
+        <constructor-arg name="gender" value="男"></constructor-arg>
+        <constructor-arg name="email" value="4321@qq.com"></constructor-arg>
+    </bean>
+
+    <!--   调用有参构造器进行创建对象并赋值2    -->
+    <bean id="person04" class="com.chen.bean.Person">
+        <!--   省略name属性，直接指定value，则顺序必须严格按照构造器中的顺序来     -->
+        <!--   index为参数指定索引（也就是这个参数是构造器中的第几个参数，顺序），从0开始     -->
+        <!--   当构造器重载时，可以使用type来指定参数的类型     -->
+        <constructor-arg value="小陈" index="0"></constructor-arg>
+        <constructor-arg value="22"></constructor-arg>
+        <constructor-arg value="女"></constructor-arg>
+        <constructor-arg value="4321@qq.com"></constructor-arg>
+    </bean>
+
+    <!--  通过p名称空间为bean赋值(还是调用得set方法)，导入p名称空间  -->
+    <!--  在开头加上xmlns:p="http://www.springframework.org/schema/p"  -->
+    <!--  名称空间：在xml中名称空间是用来防止标签重复的  -->
+    <!--
+        带前缀（名称空间）的标签：<c:forEach>  <jsp:forward>
+    -->
+    <bean id="person06" class="com.chen.bean.Person" p:age="18" p:email="7890@qq.com" p:gender="男" p:name="小张"></bean>
+
+</beans>
